@@ -34,7 +34,7 @@ The original framing was private games/lobbies. This has been refined into room-
 Recommended mental model:
 
 - `rooms` are the multiplayer container
-- `room_players` are the members of a room
+- `room_members` are the members of a room
 - `rounds` belong to a room
 - a room can run one active round at a time in v1
 
@@ -87,8 +87,11 @@ Top-level entities:
 
 - `profiles`
 - `rooms`
-- `room_players`
+- `room_members`
 - `rounds`
+- `round_participants`
+- `round_clues`
+- `round_locations`
 - `round_photos`
 - `guesses`
 
