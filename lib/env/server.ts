@@ -1,25 +1,33 @@
 import "server-only";
 
-import { getPublicEnv } from "@/lib/env/public";
-import { requireEnv } from "@/lib/env/shared";
+import { getPublicEnv, type PublicEnv } from "@/lib/env/public";
 
-let cachedEnv:
-  | (ReturnType<typeof getPublicEnv> & {
-      SUPABASE_SERVICE_ROLE_KEY: string;
-    })
-  | undefined;
+type ServerEnv = PublicEnv & {
+  SUPABASE_SERVICE_ROLE_KEY: string;
+};
 
-export function getServerEnv() {
+let cachedEnv: ServerEnv | undefined;
+
+export function getServerEnv(): ServerEnv {
   if (cachedEnv) {
     return cachedEnv;
   }
 
-  const env = requireEnv(process.env, ["SUPABASE_SERVICE_ROLE_KEY"]);
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const publicEnv = getPublicEnv();
 
-  cachedEnv = {
-    ...getPublicEnv(),
-    SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
+  if (!serviceRoleKey) {
+    throw new Error(
+      "Missing required environment variables: SUPABASE_SERVICE_ROLE_KEY",
+    );
+  }
+
+  const validatedEnv: ServerEnv = {
+    ...publicEnv,
+    SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
   };
 
-  return cachedEnv;
+  cachedEnv = validatedEnv;
+
+  return validatedEnv;
 }
