@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { generateRoomCode } from "@/lib/rooms/code";
@@ -6,11 +6,11 @@ import { requireRequestUser } from "@/lib/supabase/request-auth";
 
 const MAX_ROOM_CODE_ATTEMPTS = 8;
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   let user;
 
   try {
-    user = await requireRequestUser();
+    user = await requireRequestUser(request);
   } catch {
     return NextResponse.json(
       { error: "You need an active player session before creating a room." },
