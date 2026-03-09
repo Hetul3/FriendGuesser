@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { sanitizeRoomCode } from "@/lib/rooms/code";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireRequestUser } from "@/lib/supabase/request-auth";
 
 type JoinRequestBody = {
   code?: string;
 };
 
 export async function POST(request: NextRequest) {
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  let user;
 
-  if (userError || !user) {
+  try {
+    user = await requireRequestUser(request);
+  } catch {
     return NextResponse.json(
       { error: "You need an active player session before joining a room." },
       { status: 401 },

@@ -7,10 +7,9 @@ import {
   bootstrapAnonymousPlayer,
   upsertPlayerProfile,
 } from "@/lib/player/client";
-import {
-  findActiveRoomCodeForUser,
-} from "@/lib/rooms/client";
+import { findActiveRoomCodeForUser } from "@/lib/rooms/client";
 import { sanitizeRoomCode } from "@/lib/rooms/code";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type SessionState = "bootstrapping" | "ready" | "error";
 
@@ -19,10 +18,18 @@ type ApiResponse = {
 };
 
 async function postJson<T>(url: string, body: Record<string, string>) {
+  const supabase = getSupabaseBrowserClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}),
     },
     body: JSON.stringify(body),
   });
