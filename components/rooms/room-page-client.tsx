@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { CaptureDemoPanel } from "@/components/camera/capture-demo-panel";
 import { LiveLocationPanel } from "@/components/maps/live-location-panel";
 import { bootstrapAnonymousPlayer } from "@/lib/player/client";
 import { fetchRoomSnapshot, type RoomSnapshot } from "@/lib/rooms/client";
@@ -427,6 +428,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
         ) : null}
 
         <LiveLocationPanel />
+        <CaptureDemoPanel />
 
         <div className="min-h-6 text-sm text-[#9d3b28]">{errorMessage}</div>
       </div>
