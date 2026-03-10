@@ -68,6 +68,9 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
   const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
   const [isPending, startTransition] = useTransition();
 
   const loadSnapshot = useCallback(async () => {
@@ -148,10 +151,48 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
           void loadSnapshot();
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "round_participants",
+        },
+        () => {
+          void loadSnapshot();
+        },
+      )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
+    };
+  }, [loadSnapshot, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void loadSnapshot();
+      }
+    }, 2000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadSnapshot();
+      }
+    };
+
+    window.addEventListener("focus", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [loadSnapshot, snapshot]);
 
@@ -189,6 +230,34 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
       code,
     });
     await loadSnapshot();
+  };
+
+  const handleLeaveRoom = async () => {
+    await postJson("/api/rooms/leave", {
+      code,
+    });
+
+    router.replace("/");
+  };
+
+  const handleCopyCode = async () => {
+    if (!snapshot) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(snapshot.room.code);
+      setCopyState("copied");
+      window.setTimeout(() => {
+        setCopyState("idle");
+      }, 2000);
+    } catch (error) {
+      console.error("[room-page] copy code failed", error);
+      setCopyState("failed");
+      window.setTimeout(() => {
+        setCopyState("idle");
+      }, 2000);
+    }
   };
 
   const runAction = (action: () => Promise<void>) => {
@@ -248,13 +317,27 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
                 {snapshot.room.code}
               </h1>
             </div>
-            <button
-              type="button"
-              onClick={() => router.push("/")}
-              className="min-h-11 rounded-2xl border border-[var(--line)] px-4 text-sm font-semibold"
-            >
-              Leave page
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleCopyCode}
+                className="min-h-11 rounded-2xl bg-[var(--brand)] px-4 text-sm font-semibold text-white"
+              >
+                {copyState === "copied"
+                  ? "Code copied"
+                  : copyState === "failed"
+                    ? "Copy failed"
+                    : "Copy code"}
+              </button>
+              <button
+                type="button"
+                onClick={() => runAction(handleLeaveRoom)}
+                disabled={isPending}
+                className="min-h-11 rounded-2xl border border-[var(--line)] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPending ? "Working..." : "Leave room"}
+              </button>
+            </div>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
