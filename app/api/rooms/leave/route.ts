@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { sanitizeRoomCode } from "@/lib/rooms/code";
+import { decideLeaveRoom } from "@/lib/rooms/workflow";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireRequestUser } from "@/lib/supabase/request-auth";
 
@@ -73,6 +74,17 @@ export async function POST(request: NextRequest) {
   if (!membership || membership.status !== "joined") {
     return NextResponse.json(
       { error: "You are not currently in this room." },
+      { status: 409 },
+    );
+  }
+
+  const leaveDecision = decideLeaveRoom({
+    roomStatus: room.status,
+  });
+
+  if (!leaveDecision.allowed) {
+    return NextResponse.json(
+      { error: "Leaving an active round is not supported yet." },
       { status: 409 },
     );
   }

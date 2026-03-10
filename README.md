@@ -39,13 +39,18 @@ Seekers see only the clue photos and a rough map clue. The exact hidden coordina
 
 ## Current status
 
-- Official `create-next-app` baseline is set up and deployed on Vercel
-- Room-based architecture is the intended multiplayer model
-- Next implementation slice: app foundation, Supabase setup, schema, and RLS
+- Anonymous Supabase auth is working for guest players
+- Room create, join, auto-return, start round, and destructive leave-room flows are implemented
+- Room pages update with realtime plus polling fallback
+- Free-map live location demo is implemented with Leaflet + OpenStreetMap
+- Guided two-step camera demo works in-room
+- Demo photos can be uploaded to Supabase Storage, viewed again from signed URLs, and deleted when the room closes
+- Schema, RLS, and initial server routes are in place for the room-based architecture
+- Workflow tests exist for the room code, join/start/leave decisions, and auto-return selection
 
 ## Immediate next steps
 
-1. Replace the starter UI with a mobile-first landing page.
-2. Add Supabase environment handling and client utilities.
-3. Design the initial schema for rooms, players, rounds, photos, and guesses.
-4. Add RLS and server routes for privileged room and round actions.
+1. Convert the camera + location demos into the actual hider submission flow.
+2. Add image compression/resizing before upload.
+3. Enforce round deadlines and hider-only submission server-side.
+4. Build the seeker clue map, guess submission, and result ranking flow.

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { sanitizeRoomCode } from "@/lib/rooms/code";
+import { decideJoinRoom } from "@/lib/rooms/workflow";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireRequestUser } from "@/lib/supabase/request-auth";
 
@@ -71,7 +72,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!existingMembership && room.status !== "open") {
+  const joinDecision = decideJoinRoom({
+    roomStatus: room.status,
+    isExistingMember: Boolean(existingMembership),
+  });
+
+  if (!joinDecision.allowed) {
     return NextResponse.json(
       { error: "This room is locked because a round is already in progress." },
       { status: 409 },

@@ -2,6 +2,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
+import { selectAutoReturnRoomCode } from "@/lib/rooms/workflow";
 
 type RoomRow = Database["public"]["Tables"]["rooms"]["Row"];
 type RoomDemoPhotoRow = Database["public"]["Tables"]["room_demo_photos"]["Row"];
@@ -67,7 +68,13 @@ export async function findActiveRoomCodeForUser(userId: string) {
     throw roomsError;
   }
 
-  return rooms[0]?.code ?? null;
+  return selectAutoReturnRoomCode(
+    rooms.map((room) => ({
+      code: room.code,
+      status: room.status,
+      updatedAt: room.updated_at,
+    })),
+  );
 }
 
 export async function fetchRoomSnapshot(code: string, currentUserId: string) {
