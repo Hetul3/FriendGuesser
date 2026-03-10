@@ -14,15 +14,16 @@ export async function bootstrapAnonymousPlayer(): Promise<PlayerBootstrapResult>
   console.log("[auth] bootstrapAnonymousPlayer:start");
 
   const {
-    data: { user: existingUser },
-    error: userError,
-  } = await supabase.auth.getUser();
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-  if (userError) {
-    throw userError;
+  if (sessionError) {
+    console.error("[auth] getSession failed", sessionError);
+    throw sessionError;
   }
 
-  let user = existingUser;
+  let user = session?.user ?? null;
 
   if (!user) {
     console.log("[auth] bootstrapAnonymousPlayer:no-user, signing in anonymously");
