@@ -279,8 +279,10 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[var(--app-bg)] px-4 py-6 text-[var(--ink)]">
-        <div className="mx-auto max-w-md rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+      <main className="app-shell min-h-screen overflow-hidden bg-[var(--app-bg)] px-4 py-6 text-[var(--ink)]">
+        <div className="page-orb page-orb--coral" />
+        <div className="page-orb page-orb--mint" />
+        <div className="page-card mx-auto max-w-md rounded-[2.2rem] p-5">
           <p className="text-sm text-[var(--muted)]">Loading room...</p>
         </div>
       </main>
@@ -289,15 +291,17 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
 
   if (!snapshot) {
     return (
-      <main className="min-h-screen bg-[var(--app-bg)] px-4 py-6 text-[var(--ink)]">
-        <div className="mx-auto max-w-md rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+      <main className="app-shell min-h-screen overflow-hidden bg-[var(--app-bg)] px-4 py-6 text-[var(--ink)]">
+        <div className="page-orb page-orb--coral" />
+        <div className="page-orb page-orb--mint" />
+        <div className="page-card mx-auto max-w-md rounded-[2.2rem] p-5">
           <h1 className="text-2xl font-semibold">Room unavailable</h1>
           <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
             {errorMessage ?? "This room could not be loaded."}
           </p>
           <Link
             href="/"
-            className="mt-4 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[var(--brand)] px-4 text-sm font-semibold text-white"
+            className="primary-button mt-4 inline-flex min-h-12 items-center justify-center rounded-[1.2rem] px-4 text-sm font-semibold"
           >
             Back to home
           </Link>
@@ -307,15 +311,17 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--app-bg)] px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))] text-[var(--ink)]">
+    <main className="app-shell min-h-screen overflow-hidden bg-[var(--app-bg)] px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))] text-[var(--ink)]">
+      <div className="page-orb page-orb--coral" />
+      <div className="page-orb page-orb--mint" />
       <div className="mx-auto flex max-w-md flex-col gap-4">
-        <section className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+        <section className="page-card rounded-[2.2rem] p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">
+              <p className="pill-badge accent-chip">
                 Room code
               </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em]">
+              <h1 className="mt-3 text-4xl font-semibold tracking-[0.16em] text-[var(--ink)]">
                 {snapshot.room.code}
               </h1>
             </div>
@@ -323,7 +329,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="min-h-11 rounded-2xl bg-[var(--brand)] px-4 text-sm font-semibold text-white"
+                className="primary-button min-h-11 rounded-[1.2rem] px-4 text-sm font-semibold"
               >
                 {copyState === "copied"
                   ? "Code copied"
@@ -335,7 +341,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
                 type="button"
                 onClick={() => runAction(handleLeaveRoom)}
                 disabled={isPending}
-                className="min-h-11 rounded-2xl border border-[var(--line)] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                className="secondary-button min-h-11 rounded-[1.2rem] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPending ? "Working..." : "Leave room"}
               </button>
@@ -343,13 +349,13 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl bg-white/75 p-3">
+            <div className="soft-panel rounded-[1.4rem] p-3">
               <p className="font-semibold text-[var(--brand-strong)]">Room state</p>
               <p className="mt-2 capitalize text-[var(--muted)]">
                 {snapshot.room.status.replace("_", " ")}
               </p>
             </div>
-            <div className="rounded-2xl bg-white/75 p-3">
+            <div className="soft-panel rounded-[1.4rem] p-3">
               <p className="font-semibold text-[var(--brand-strong)]">You</p>
               <p className="mt-2 text-[var(--muted)]">
                 {currentUser?.displayName ?? "Player"}
@@ -358,7 +364,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+        <section className="page-card rounded-[2.2rem] p-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Players</h2>
@@ -374,7 +380,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
                 snapshot.members.length < 2 ||
                 isPending
               }
-              className="min-h-12 rounded-2xl bg-[var(--brand)] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="primary-button min-h-12 rounded-[1.2rem] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPending ? "Starting..." : "Start round"}
             </button>
@@ -384,7 +390,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
             {snapshot.members.map((member) => (
               <li
                 key={member.id}
-                className="flex items-center justify-between rounded-2xl border border-[var(--line)] bg-white/80 px-4 py-3"
+                className="soft-panel flex items-center justify-between rounded-[1.35rem] px-4 py-3"
               >
                 <span className="font-medium">
                   {member.displayName}
@@ -397,27 +403,28 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
 
           {snapshot.room.status === "open" ? (
             <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
-              Anyone already in the room can start. Starting locks new joins and
-              randomly assigns one hider.
+              Everyone already here can head into the next round together.
+              Starting locks the room and picks the hider from the current
+              group.
             </p>
           ) : null}
         </section>
 
         {snapshot.activeRound ? (
-          <section className="rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow)]">
+          <section className="page-card rounded-[2.2rem] p-5">
             <h2 className="text-xl font-semibold">Active round</h2>
             <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl bg-white/75 p-3 text-sm">
+              <div className="soft-panel rounded-[1.4rem] p-3 text-sm">
                 <p className="font-semibold text-[var(--brand-strong)]">Hider</p>
                 <p className="mt-2 text-[var(--muted)]">{hiderName}</p>
               </div>
-              <div className="rounded-2xl bg-white/75 p-3 text-sm">
+              <div className="soft-panel rounded-[1.4rem] p-3 text-sm">
                 <p className="font-semibold text-[var(--brand-strong)]">Your role</p>
                 <p className="mt-2 capitalize text-[var(--muted)]">
                   {currentRole ?? "Unknown"}
                 </p>
               </div>
-              <div className="rounded-2xl bg-white/75 p-3 text-sm">
+              <div className="soft-panel rounded-[1.4rem] p-3 text-sm">
                 <p className="font-semibold text-[var(--brand-strong)]">Status</p>
                 <p className="mt-2 capitalize text-[var(--muted)]">
                   {snapshot.activeRound.status.replaceAll("_", " ")}
@@ -433,7 +440,13 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
           playerId={playerId}
         />
 
-        <div className="min-h-6 text-sm text-[#9d3b28]">{errorMessage}</div>
+        <div className="min-h-6 text-sm text-[#9d3b28]">
+          {errorMessage ? (
+            <div className="rounded-[1rem] border border-[#efb2b7] bg-[#fff1f2] px-3 py-2">
+              {errorMessage}
+            </div>
+          ) : null}
+        </div>
       </div>
     </main>
   );

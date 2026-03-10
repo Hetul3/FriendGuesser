@@ -165,27 +165,42 @@ export function RoomEntryCard() {
   };
 
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow)] backdrop-blur">
-      <div className="bg-[var(--brand)] px-5 py-5 text-white">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/72">
+    <section className="page-card overflow-hidden rounded-[2.25rem]">
+      <div className="relative overflow-hidden bg-[linear-gradient(135deg,#5d7453_0%,#7d8f62_36%,#a6b783_64%,#88a9bb_100%)] px-5 py-6 text-white">
+        <div className="absolute right-[-1.5rem] top-[-1rem] h-24 w-24 rounded-full bg-white/12 blur-sm" />
+        <div className="absolute bottom-[-2rem] left-[-1rem] h-28 w-28 rounded-full bg-[#f2dfb5]/18 blur-sm" />
+        <p className="pill-badge text-white/96">
           Anonymous rooms
         </p>
-        <h1 className="mt-2 text-3xl font-semibold">Join the next hunt</h1>
-        <p className="mt-3 text-sm leading-6 text-white/84">
-          Create a room code, invite friends, and lock the room when the round
-          begins.
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
+          Head outside and start the hunt
+        </h1>
+        <p className="mt-3 max-w-sm text-sm leading-6 text-white/88">
+          Make a room, pull your friends in, and use the app like a shared
+          field guide for the round.
         </p>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full bg-white/16 px-3 py-2 font-semibold text-white/92">
+            Private rooms
+          </span>
+          <span className="rounded-full bg-white/16 px-3 py-2 font-semibold text-white/92">
+            Outdoor rounds
+          </span>
+          <span className="rounded-full bg-white/16 px-3 py-2 font-semibold text-white/92">
+            Trail-ready
+          </span>
+        </div>
       </div>
 
       <div className="space-y-5 px-5 py-5">
         <label className="block space-y-2">
-          <span className="text-sm font-semibold">Display name</span>
+          <span className="text-sm font-semibold text-[var(--ink)]">Display name</span>
           <input
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="Hetul"
+            placeholder="Trail name"
             maxLength={32}
-            className="min-h-14 w-full rounded-2xl border border-[var(--line)] bg-white/80 px-4 text-base outline-none ring-0 placeholder:text-[var(--muted)] focus:border-[var(--brand)]"
+            className="min-h-14 w-full rounded-[1.4rem] border border-[var(--line)] bg-white/88 px-4 text-base outline-none ring-0 placeholder:text-[var(--muted)] focus:border-[var(--brand)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(108,140,97,0.12)]"
           />
         </label>
 
@@ -194,34 +209,34 @@ export function RoomEntryCard() {
             type="button"
             onClick={() => runAction(handleCreateRoom)}
             disabled={sessionState !== "ready" || isPending}
-            className="min-h-14 rounded-2xl bg-[var(--brand)] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="primary-button min-h-14 rounded-[1.4rem] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? "Working..." : "Create room"}
           </button>
 
-          <div className="rounded-[1.5rem] border border-dashed border-[var(--line)] p-3">
+          <div className="soft-panel rounded-[1.6rem] border-dashed p-3">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold">Join with room code</span>
+              <span className="text-sm font-semibold text-[var(--ink)]">Join with room code</span>
               <input
                 value={roomCode}
                 onChange={(event) => setRoomCode(sanitizeRoomCode(event.target.value))}
                 placeholder="ABCD23"
                 maxLength={6}
-                className="min-h-14 w-full rounded-2xl border border-[var(--line)] bg-white/80 px-4 font-semibold uppercase tracking-[0.2em] outline-none placeholder:tracking-[0.2em] placeholder:text-[var(--muted)] focus:border-[var(--brand)]"
+                className="min-h-14 w-full rounded-[1.4rem] border border-[var(--line)] bg-white/88 px-4 font-semibold uppercase tracking-[0.2em] outline-none placeholder:tracking-[0.2em] placeholder:text-[var(--muted)] focus:border-[var(--accent-strong)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(143,183,199,0.16)]"
               />
             </label>
             <button
               type="button"
               onClick={() => runAction(handleJoinRoom)}
               disabled={sessionState !== "ready" || isPending}
-              className="mt-3 min-h-14 w-full rounded-2xl border border-[var(--line)] bg-white/80 px-4 text-sm font-semibold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="secondary-button mt-3 min-h-14 w-full rounded-[1.4rem] px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPending ? "Working..." : "Join room"}
             </button>
           </div>
         </div>
 
-        <div className="rounded-[1.5rem] bg-white/70 p-4 text-sm leading-6 text-[var(--muted)]">
+        <div className="soft-panel rounded-[1.5rem] p-4 text-sm leading-6 text-[var(--muted)]">
           <p className="font-semibold text-[var(--brand-strong)]">Current flow</p>
           <p className="mt-2">
             Anyone in a room can start the round. Starting locks the room,
@@ -230,9 +245,15 @@ export function RoomEntryCard() {
         </div>
 
         <div className="min-h-6 text-sm text-[var(--muted)]">
-          {sessionState === "bootstrapping" ? "Preparing anonymous player session..." : null}
+          {sessionState === "bootstrapping" ? (
+            <span className="accent-chip inline-flex rounded-full px-3 py-2 font-medium">
+              Preparing anonymous player session...
+            </span>
+          ) : null}
           {errorMessage ? (
-            <p className="text-[#9d3b28]">{errorMessage}</p>
+            <p className="mt-2 rounded-[1rem] border border-[#efb2b7] bg-[#fff1f2] px-3 py-2 text-[#9d3b28]">
+              {errorMessage}
+            </p>
           ) : null}
         </div>
       </div>

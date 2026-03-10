@@ -1,14 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --app-bg: #f5efe4;
-  --ink: #1f2937;
-  --muted: #5c6573;
-  --surface: rgba(255, 251, 245, 0.82);
-  --brand: #165d59;
-  --brand-strong: #0f4340;
-  --line: rgba(31, 41, 55, 0.12);
-  --shadow: 0 24px 80px rgba(22, 93, 89, 0.14);
+  --app-bg: #f6f1e6;
+  --ink: #2f3a2f;
+  --muted: #667264;
+  --surface: rgba(252, 249, 242, 0.94);
+  --surface-strong: rgba(255, 252, 247, 0.96);
+  --surface-accent: rgba(240, 230, 206, 0.92);
+  --brand: #6c8c61;
+  --brand-strong: #4f6d47;
+  --brand-ink: #f9fbf4;
+  --brand-soft: #cbd9b9;
+  --accent: #8fb7c7;
+  --accent-strong: #6e94a4;
+  --line: rgba(82, 88, 70, 0.14);
+  --line-strong: rgba(82, 88, 70, 0.22);
+  --shadow: 0 28px 90px rgba(113, 111, 82, 0.14);
+  --shadow-soft: 0 14px 40px rgba(108, 140, 97, 0.14);
+  --success: #73a97f;
+  --warning: #d8a162;
+  --danger: #b66b5e;
 }
 
 * {
@@ -17,8 +28,10 @@
 
 html {
   background:
-    radial-gradient(circle at top, rgba(239, 143, 53, 0.18), transparent 35%),
-    linear-gradient(180deg, #f7f3eb 0%, #efe6d7 100%);
+    radial-gradient(circle at top left, rgba(205, 220, 194, 0.92), transparent 24%),
+    radial-gradient(circle at top right, rgba(182, 212, 226, 0.76), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(232, 205, 165, 0.66), transparent 26%),
+    linear-gradient(180deg, #f8f4ec 0%, #f2ecdf 52%, #f7f3ea 100%);
 }
 
 body {
@@ -32,6 +45,10 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+::selection {
+  background: rgba(108, 140, 97, 0.24);
 }
 
 button:not(:disabled),
@@ -50,9 +67,9 @@ button:not(:disabled),
   width: 18px;
   height: 18px;
   border-radius: 999px;
-  background: #165d59;
+  background: var(--brand);
   border: 3px solid rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 0 6px rgba(22, 93, 89, 0.16);
+  box-shadow: 0 0 0 6px rgba(108, 140, 97, 0.16);
 }
 
 button,
@@ -60,4 +77,100 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.995);
+}
+
+.app-shell {
+  position: relative;
+}
+
+.page-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.page-orb--coral {
+  top: 1.5rem;
+  right: 1rem;
+  width: 8rem;
+  height: 8rem;
+  background: radial-gradient(circle, rgba(206, 221, 188, 0.92), transparent 70%);
+}
+
+.page-orb--mint {
+  left: -1rem;
+  top: 22rem;
+  width: 9rem;
+  height: 9rem;
+  background: radial-gradient(circle, rgba(176, 208, 224, 0.82), transparent 68%);
+}
+
+.page-card {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(249, 244, 234, 0.94)),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.72), transparent 70%);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(249, 245, 236, 0.38);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.soft-panel {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(246, 239, 227, 0.96));
+  box-shadow: var(--shadow-soft);
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #739066 0%, #5f7f58 52%, #4d6f46 100%);
+  color: var(--brand-ink);
+  box-shadow: 0 16px 32px rgba(87, 111, 76, 0.22);
+}
+
+.primary-button:hover:not(:disabled) {
+  box-shadow: 0 20px 38px rgba(87, 111, 76, 0.28);
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.98), rgba(241, 234, 222, 0.94));
+  color: var(--ink);
+}
+
+.accent-chip {
+  border: 1px solid rgba(110, 148, 164, 0.22);
+  background: rgba(143, 183, 199, 0.18);
+  color: #466677;
 }

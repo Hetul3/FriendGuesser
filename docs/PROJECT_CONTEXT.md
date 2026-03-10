@@ -168,6 +168,37 @@ Server-only:
   - geolocation permissions
   - uploads
 
+## UI direction
+
+The UI should feel like an outdoor social game, not a generic SaaS dashboard.
+
+Design philosophy:
+
+- Favor a natural, field-note feel over polished corporate UI
+- The app should suggest being outside with friends: warm paper surfaces, trail-map softness, mossy greens, sky blues, clay accents
+- Mobile-first clarity still matters more than decoration
+- Primary actions should pop clearly and look tappable
+- Cards should feel soft, layered, and tactile rather than flat
+- Avoid drifting into purple-heavy startup gradients or sterile monochrome panels
+- Avoid cold dark-mode-first styling unless explicitly requested later
+
+Current palette guidance:
+
+- background: warm parchment / sand
+- primary brand: moss / olive green
+- accent: soft sky blue
+- supporting warmth: clay / muted earth tones
+- text: deep forest or bark-like neutral rather than pure black
+- borders and shadows: soft organic contrast, not harsh grayscale chrome
+
+Implementation guidance:
+
+- Reuse the CSS variables in `app/globals.css`
+- Prefer evolving the existing visual language rather than replacing it wholesale
+- When adding new screens, keep the same family of rounded cards, layered backgrounds, and strong primary buttons
+- New demo or workflow panels should be styled to match the room and home shell instead of looking like utility widgets dropped in later
+- If a UI choice feels like a generic template, it is probably wrong for this project
+
 ## Recommended next implementation slice
 
 Convert the current map and camera demos into the real hider submission flow:

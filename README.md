@@ -47,6 +47,7 @@ Seekers see only the clue photos and a rough map clue. The exact hidden coordina
 - Demo photos can be uploaded to Supabase Storage, viewed again from signed URLs, and deleted when the room closes
 - Schema, RLS, and initial server routes are in place for the room-based architecture
 - Workflow tests exist for the room code, join/start/leave decisions, and auto-return selection
+- The UI direction is documented and should stay aligned with an outdoor, natural, friends-playing-outside feel
 
 ## Immediate next steps
 
