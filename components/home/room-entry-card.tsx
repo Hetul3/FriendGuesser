@@ -22,6 +22,17 @@ async function postJson<T>(url: string, body: Record<string, string>) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const tokenPreview = session?.access_token
+    ? `${session.access_token.slice(0, 12)}...`
+    : null;
+
+  console.log("[rooms] request:start", {
+    url,
+    hasSession: Boolean(session),
+    hasAccessToken: Boolean(session?.access_token),
+    tokenPreview,
+    body,
+  });
 
   const response = await fetch(url, {
     method: "POST",
@@ -37,6 +48,13 @@ async function postJson<T>(url: string, body: Record<string, string>) {
   const payload = (await response.json().catch(() => null)) as
     | { error?: string; code?: string }
     | null;
+
+  console.log("[rooms] request:finish", {
+    url,
+    status: response.status,
+    ok: response.ok,
+    payload,
+  });
 
   if (!response.ok) {
     throw new Error(payload?.error ?? "Request failed.");
@@ -58,6 +76,10 @@ export function RoomEntryCard() {
     try {
       const { user, displayName: existingDisplayName } =
         await bootstrapAnonymousPlayer();
+      console.log("[rooms] bootstrap complete", {
+        userId: user.id,
+        hasDisplayName: Boolean(existingDisplayName),
+      });
 
       setPlayerId(user.id);
       if (existingDisplayName) {
@@ -65,6 +87,10 @@ export function RoomEntryCard() {
       }
 
       const activeRoomCode = await findActiveRoomCodeForUser(user.id);
+      console.log("[rooms] active room lookup", {
+        userId: user.id,
+        activeRoomCode,
+      });
 
       if (activeRoomCode) {
         router.replace(`/rooms/${activeRoomCode}`);
@@ -73,6 +99,7 @@ export function RoomEntryCard() {
 
       setSessionState("ready");
     } catch (error) {
+      console.error("[rooms] bootstrap failed", error);
       setSessionState("error");
       setErrorMessage(
         error instanceof Error
@@ -129,6 +156,7 @@ export function RoomEntryCard() {
       try {
         await action();
       } catch (error) {
+        console.error("[rooms] action failed", error);
         setErrorMessage(
           error instanceof Error ? error.message : "Something went wrong.",
         );

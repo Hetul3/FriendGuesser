@@ -23,6 +23,17 @@ async function postJson(url: string, body: Record<string, string>) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const tokenPreview = session?.access_token
+    ? `${session.access_token.slice(0, 12)}...`
+    : null;
+
+  console.log("[room-page] request:start", {
+    url,
+    hasSession: Boolean(session),
+    hasAccessToken: Boolean(session?.access_token),
+    tokenPreview,
+    body,
+  });
 
   const response = await fetch(url, {
     method: "POST",
@@ -38,6 +49,13 @@ async function postJson(url: string, body: Record<string, string>) {
   const payload = (await response.json().catch(() => null)) as
     | { error?: string }
     | null;
+
+  console.log("[room-page] request:finish", {
+    url,
+    status: response.status,
+    ok: response.ok,
+    payload,
+  });
 
   if (!response.ok) {
     throw new Error(payload?.error ?? "Request failed.");
@@ -55,9 +73,14 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
   const loadSnapshot = useCallback(async () => {
     try {
       const { user } = await bootstrapAnonymousPlayer();
+      console.log("[room-page] loadSnapshot:user", { userId: user.id, code });
       setPlayerId(user.id);
 
       const nextSnapshot = await fetchRoomSnapshot(code, user.id);
+      console.log("[room-page] loadSnapshot:result", {
+        code,
+        found: Boolean(nextSnapshot),
+      });
 
       if (!nextSnapshot) {
         setSnapshot(null);
@@ -68,6 +91,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
       setSnapshot(nextSnapshot);
       setErrorMessage(null);
     } catch (error) {
+      console.error("[room-page] loadSnapshot failed", error);
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to load the room.",
       );
@@ -174,6 +198,7 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
       try {
         await action();
       } catch (error) {
+        console.error("[room-page] action failed", error);
         setErrorMessage(
           error instanceof Error ? error.message : "Something went wrong.",
         );

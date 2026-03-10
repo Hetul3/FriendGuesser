@@ -7,13 +7,28 @@ import { requireRequestUser } from "@/lib/supabase/request-auth";
 const MAX_ROOM_CODE_ATTEMPTS = 8;
 
 export async function POST(request: NextRequest) {
+  console.log("rooms.create request received", {
+    hasAuthorizationHeader: Boolean(request.headers.get("authorization")),
+    userAgent: request.headers.get("user-agent"),
+  });
+
   let user;
 
   try {
     user = await requireRequestUser(request);
-  } catch {
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "AUTH_UNKNOWN";
+    console.error("rooms.create auth failed", {
+      detail,
+      hasAuthorizationHeader: Boolean(request.headers.get("authorization")),
+    });
+
     return NextResponse.json(
-      { error: "You need an active player session before creating a room." },
+      {
+        error: "You need an active player session before creating a room.",
+        detail:
+          process.env.NODE_ENV === "production" ? undefined : detail,
+      },
       { status: 401 },
     );
   }

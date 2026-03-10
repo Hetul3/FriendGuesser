@@ -17,7 +17,9 @@ export async function requireRequestUser(request?: NextRequest): Promise<User> {
     const { data, error } = await admin.auth.getUser(bearerToken);
 
     if (error || !data.user) {
-      throw new Error("Auth session missing.");
+      throw new Error(
+        `AUTH_BEARER_INVALID:${error?.message ?? "Unable to load bearer user."}`,
+      );
     }
 
     return data.user;
@@ -30,7 +32,7 @@ export async function requireRequestUser(request?: NextRequest): Promise<User> {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    throw new Error("Auth session missing.");
+    throw new Error(`AUTH_COOKIE_MISSING:${error?.message ?? "No user found."}`);
   }
 
   return user;

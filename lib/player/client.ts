@@ -11,6 +11,7 @@ export type PlayerBootstrapResult = {
 
 export async function bootstrapAnonymousPlayer(): Promise<PlayerBootstrapResult> {
   const supabase = getSupabaseBrowserClient();
+  console.log("[auth] bootstrapAnonymousPlayer:start");
 
   const {
     data: { user: existingUser },
@@ -24,9 +25,11 @@ export async function bootstrapAnonymousPlayer(): Promise<PlayerBootstrapResult>
   let user = existingUser;
 
   if (!user) {
+    console.log("[auth] bootstrapAnonymousPlayer:no-user, signing in anonymously");
     const { data, error } = await supabase.auth.signInAnonymously();
 
     if (error) {
+      console.error("[auth] signInAnonymously failed", error);
       throw error;
     }
 
@@ -37,6 +40,11 @@ export async function bootstrapAnonymousPlayer(): Promise<PlayerBootstrapResult>
     throw new Error("Unable to create or restore an anonymous player session.");
   }
 
+  console.log("[auth] bootstrapAnonymousPlayer:user-ready", {
+    userId: user.id,
+    isAnonymous: user.is_anonymous,
+  });
+
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("display_name")
@@ -44,8 +52,13 @@ export async function bootstrapAnonymousPlayer(): Promise<PlayerBootstrapResult>
     .maybeSingle();
 
   if (profileError) {
+    console.error("[auth] profile lookup failed", profileError);
     throw profileError;
   }
+
+  console.log("[auth] bootstrapAnonymousPlayer:profile", {
+    hasDisplayName: Boolean(profile?.display_name),
+  });
 
   return {
     user,
@@ -58,6 +71,10 @@ export async function upsertPlayerProfile(
   displayName: string,
 ) {
   const supabase = getSupabaseBrowserClient();
+  console.log("[auth] upsertPlayerProfile:start", {
+    userId,
+    displayNameLength: displayName.trim().length,
+  });
 
   const { error } = await supabase.from("profiles").upsert(
     {
@@ -70,6 +87,9 @@ export async function upsertPlayerProfile(
   );
 
   if (error) {
+    console.error("[auth] upsertPlayerProfile failed", error);
     throw error;
   }
+
+  console.log("[auth] upsertPlayerProfile:success", { userId });
 }

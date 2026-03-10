@@ -13,13 +13,28 @@ type StartRequestBody = {
 };
 
 export async function POST(request: NextRequest) {
+  console.log("rooms.start request received", {
+    hasAuthorizationHeader: Boolean(request.headers.get("authorization")),
+    userAgent: request.headers.get("user-agent"),
+  });
+
   let user;
 
   try {
     user = await requireRequestUser(request);
-  } catch {
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "AUTH_UNKNOWN";
+    console.error("rooms.start auth failed", {
+      detail,
+      hasAuthorizationHeader: Boolean(request.headers.get("authorization")),
+    });
+
     return NextResponse.json(
-      { error: "You need an active player session before starting a round." },
+      {
+        error: "You need an active player session before starting a round.",
+        detail:
+          process.env.NODE_ENV === "production" ? undefined : detail,
+      },
       { status: 401 },
     );
   }
