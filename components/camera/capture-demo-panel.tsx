@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -9,7 +9,6 @@ type CaptureStep = "environment" | "selfie" | "done";
 
 type CaptureImage = {
   dataUrl: string;
-  capturedAt: number;
 };
 
 type CaptureState =
@@ -79,7 +78,6 @@ function getCameraErrorMessage(error: unknown) {
 }
 
 type CaptureDemoPanelProps = {
-  roomId: string;
   roomCode: string;
   playerId: string | null;
 };
@@ -113,16 +111,14 @@ async function fetchRoomPhotoGallery(roomCode: string) {
 async function saveRoomPhotoMetadata(input: {
   roomCode: string;
   kind: "environment" | "selfie";
-  storagePath: string;
-  mimeType: string;
-  byteSize: number;
+  dataUrl: string;
 }) {
   const supabase = getSupabaseBrowserClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const response = await fetch("/api/rooms/demo-photos/save", {
+  const response = await fetch("/api/rooms/demo-photos/upload", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -133,9 +129,7 @@ async function saveRoomPhotoMetadata(input: {
     body: JSON.stringify({
       code: input.roomCode,
       kind: input.kind,
-      storagePath: input.storagePath,
-      mimeType: input.mimeType,
-      byteSize: input.byteSize,
+      dataUrl: input.dataUrl,
     }),
   });
 
@@ -149,7 +143,6 @@ async function saveRoomPhotoMetadata(input: {
 }
 
 export function CaptureDemoPanel({
-  roomId,
   roomCode,
   playerId,
 }: CaptureDemoPanelProps) {
@@ -186,18 +179,36 @@ export function CaptureDemoPanel({
     };
   }, []);
 
-  const refreshGallery = useCallback(async () => {
+  const refreshGallery = async () => {
     try {
       const photos = await fetchRoomPhotoGallery(roomCode);
       setGalleryPhotos(photos);
     } catch (error) {
       console.error("[camera] refreshGallery failed", error);
     }
-  }, [roomCode]);
+  };
 
   useEffect(() => {
-    void refreshGallery();
-  }, [refreshGallery]);
+    let cancelled = false;
+
+    const loadGallery = async () => {
+      try {
+        const photos = await fetchRoomPhotoGallery(roomCode);
+
+        if (!cancelled) {
+          setGalleryPhotos(photos);
+        }
+      } catch (error) {
+        console.error("[camera] initial gallery load failed", error);
+      }
+    };
+
+    void loadGallery();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roomCode]);
 
   const startCamera = async (step: Exclude<CaptureStep, "done">) => {
     setCaptureState({ status: "requesting" });
@@ -267,7 +278,6 @@ export function CaptureDemoPanel({
     const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     const image: CaptureImage = {
       dataUrl,
-      capturedAt: Date.now(),
     };
 
     if (captureStep === "environment") {
@@ -326,28 +336,10 @@ export function CaptureDemoPanel({
     setUploadError(null);
 
     try {
-      const supabase = getSupabaseBrowserClient();
-      const blob = await (await fetch(image.dataUrl)).blob();
-      const extension = blob.type === "image/png" ? "png" : "jpg";
-      const storagePath = `${playerId}/${roomId}/${kind}.${extension}`;
-
-      const { error: storageError } = await supabase.storage
-        .from("room-demo-photos")
-        .upload(storagePath, blob, {
-          upsert: true,
-          contentType: blob.type || "image/jpeg",
-        });
-
-      if (storageError) {
-        throw storageError;
-      }
-
       await saveRoomPhotoMetadata({
         roomCode,
         kind,
-        storagePath,
-        mimeType: blob.type || "image/jpeg",
-        byteSize: blob.size,
+        dataUrl: image.dataUrl,
       });
 
       await refreshGallery();

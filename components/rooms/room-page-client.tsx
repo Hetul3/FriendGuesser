@@ -429,7 +429,6 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
 
         <LiveLocationPanel />
         <CaptureDemoPanel
-          roomId={snapshot.room.id}
           roomCode={snapshot.room.code}
           playerId={playerId}
         />
