@@ -110,6 +110,44 @@ async function fetchRoomPhotoGallery(roomCode: string) {
   return payload?.photos ?? [];
 }
 
+async function saveRoomPhotoMetadata(input: {
+  roomCode: string;
+  kind: "environment" | "selfie";
+  storagePath: string;
+  mimeType: string;
+  byteSize: number;
+}) {
+  const supabase = getSupabaseBrowserClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const response = await fetch("/api/rooms/demo-photos/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}),
+    },
+    body: JSON.stringify({
+      code: input.roomCode,
+      kind: input.kind,
+      storagePath: input.storagePath,
+      mimeType: input.mimeType,
+      byteSize: input.byteSize,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | { error?: string }
+    | null;
+
+  if (!response.ok) {
+    throw new Error(payload?.error ?? "Unable to save room photo metadata.");
+  }
+}
+
 export function CaptureDemoPanel({
   roomId,
   roomCode,
@@ -304,24 +342,13 @@ export function CaptureDemoPanel({
         throw storageError;
       }
 
-      const { error: dbError } = await supabase.from("room_demo_photos").upsert(
-        {
-          room_id: roomId,
-          user_id: playerId,
-          kind,
-          storage_bucket: "room-demo-photos",
-          storage_path: storagePath,
-          mime_type: blob.type || "image/jpeg",
-          byte_size: blob.size,
-        },
-        {
-          onConflict: "room_id,user_id,kind",
-        },
-      );
-
-      if (dbError) {
-        throw dbError;
-      }
+      await saveRoomPhotoMetadata({
+        roomCode,
+        kind,
+        storagePath,
+        mimeType: blob.type || "image/jpeg",
+        byteSize: blob.size,
+      });
 
       await refreshGallery();
       setUploadState("idle");
