@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type CaptureStep = "environment" | "selfie" | "done";
 
@@ -24,6 +26,14 @@ type CaptureState =
       status: "error";
       message: string;
     };
+
+type SavedRoomPhoto = {
+  id: string;
+  kind: "environment" | "selfie";
+  userId: string;
+  createdAt: string;
+  signedUrl: string | null;
+};
 
 const stepCopy: Record<
   Exclude<CaptureStep, "done">,
@@ -68,13 +78,54 @@ function getCameraErrorMessage(error: unknown) {
   return "Unable to start the camera right now.";
 }
 
-export function CaptureDemoPanel() {
+type CaptureDemoPanelProps = {
+  roomId: string;
+  roomCode: string;
+  playerId: string | null;
+};
+
+async function fetchRoomPhotoGallery(roomCode: string) {
+  const supabase = getSupabaseBrowserClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const response = await fetch(`/api/rooms/demo-photos?code=${roomCode}`, {
+    method: "GET",
+    headers: {
+      ...(session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {}),
+    },
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | { error?: string; photos?: SavedRoomPhoto[] }
+    | null;
+
+  if (!response.ok) {
+    throw new Error(payload?.error ?? "Unable to load room photos.");
+  }
+
+  return payload?.photos ?? [];
+}
+
+export function CaptureDemoPanel({
+  roomId,
+  roomCode,
+  playerId,
+}: CaptureDemoPanelProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [captureStep, setCaptureStep] = useState<CaptureStep>("environment");
   const [captureState, setCaptureState] = useState<CaptureState>({
     status: "idle",
   });
+  const [galleryPhotos, setGalleryPhotos] = useState<SavedRoomPhoto[]>([]);
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">(
+    "idle",
+  );
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [environmentImage, setEnvironmentImage] = useState<CaptureImage | null>(
     null,
   );
@@ -96,6 +147,19 @@ export function CaptureDemoPanel() {
       stopStream();
     };
   }, []);
+
+  const refreshGallery = useCallback(async () => {
+    try {
+      const photos = await fetchRoomPhotoGallery(roomCode);
+      setGalleryPhotos(photos);
+    } catch (error) {
+      console.error("[camera] refreshGallery failed", error);
+    }
+  }, [roomCode]);
+
+  useEffect(() => {
+    void refreshGallery();
+  }, [refreshGallery]);
 
   const startCamera = async (step: Exclude<CaptureStep, "done">) => {
     setCaptureState({ status: "requesting" });
@@ -170,6 +234,7 @@ export function CaptureDemoPanel() {
 
     if (captureStep === "environment") {
       setEnvironmentImage(image);
+      void uploadPhoto(image, "environment");
       setCaptureStep("selfie");
       setCaptureState({ status: "idle" });
       stopStream();
@@ -178,6 +243,7 @@ export function CaptureDemoPanel() {
 
     if (captureStep === "selfie") {
       setSelfieImage(image);
+      void uploadPhoto(image, "selfie");
       setCaptureStep("done");
       setCaptureState({ status: "idle" });
       stopStream();
@@ -188,6 +254,7 @@ export function CaptureDemoPanel() {
     stopStream();
     setEnvironmentImage(null);
     setSelfieImage(null);
+    setUploadError(null);
     setCaptureStep("environment");
     setCaptureState({ status: "idle" });
   };
@@ -204,6 +271,68 @@ export function CaptureDemoPanel() {
       setEnvironmentImage(null);
       setCaptureStep("environment");
       setCaptureState({ status: "idle" });
+    }
+  };
+
+  const uploadPhoto = async (
+    image: CaptureImage,
+    kind: "environment" | "selfie",
+  ) => {
+    if (!playerId) {
+      setUploadState("error");
+      setUploadError("Player identity is not ready yet.");
+      return;
+    }
+
+    setUploadState("uploading");
+    setUploadError(null);
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const blob = await (await fetch(image.dataUrl)).blob();
+      const extension = blob.type === "image/png" ? "png" : "jpg";
+      const storagePath = `${playerId}/${roomId}/${kind}.${extension}`;
+
+      const { error: storageError } = await supabase.storage
+        .from("room-demo-photos")
+        .upload(storagePath, blob, {
+          upsert: true,
+          contentType: blob.type || "image/jpeg",
+        });
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      const { error: dbError } = await supabase.from("room_demo_photos").upsert(
+        {
+          room_id: roomId,
+          user_id: playerId,
+          kind,
+          storage_bucket: "room-demo-photos",
+          storage_path: storagePath,
+          mime_type: blob.type || "image/jpeg",
+          byte_size: blob.size,
+        },
+        {
+          onConflict: "room_id,user_id,kind",
+        },
+      );
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      await refreshGallery();
+      setUploadState("idle");
+    } catch (error) {
+      console.error("[camera] uploadPhoto failed", error);
+      setUploadState("error");
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Unable to upload the room photo demo.",
+      );
     }
   };
 
@@ -272,6 +401,18 @@ export function CaptureDemoPanel() {
                 {captureState.message}
               </div>
             ) : null}
+
+            {uploadState === "uploading" ? (
+              <div className="rounded-[1.25rem] border border-[var(--line)] bg-white px-4 py-3 text-sm text-[var(--muted)]">
+                Uploading captured photo to Supabase...
+              </div>
+            ) : null}
+
+            {uploadError ? (
+              <div className="rounded-[1.25rem] border border-[#d8a39a] bg-[#fff2ef] px-4 py-3 text-sm text-[#9d3b28]">
+                {uploadError}
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="mt-4">
@@ -297,6 +438,65 @@ export function CaptureDemoPanel() {
           image={selfieImage}
           placeholder="No selfie photo captured yet."
         />
+      </div>
+
+      <div className="mt-4 rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-[var(--brand-strong)]">
+              Saved room media
+            </p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              These previews are being loaded back from Supabase storage.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void refreshGallery()}
+            className="min-h-11 rounded-2xl border border-[var(--line)] px-4 text-sm font-semibold"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-4">
+          {galleryPhotos.length === 0 ? (
+            <div className="rounded-[1.25rem] border border-dashed border-[var(--line)] px-4 py-8 text-sm text-[var(--muted)]">
+              No room photos saved in Supabase yet.
+            </div>
+          ) : (
+            galleryPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                className="rounded-[1.25rem] border border-[var(--line)] bg-[#f3eee3] p-3"
+              >
+                <div className="mb-3 flex items-center justify-between gap-4 text-sm">
+                  <span className="font-semibold capitalize text-[var(--brand-strong)]">
+                    {photo.kind}
+                  </span>
+                  <span className="text-[var(--muted)]">
+                    {new Date(photo.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
+
+                {photo.signedUrl ? (
+                  <Image
+                    src={photo.signedUrl}
+                    alt={`${photo.kind} room photo`}
+                    width={960}
+                    height={1280}
+                    className="h-auto w-full rounded-xl object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="rounded-xl border border-dashed border-[var(--line)] px-4 py-8 text-sm text-[var(--muted)]">
+                    Signed URL unavailable for this photo.
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </section>
   );

@@ -428,7 +428,11 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
         ) : null}
 
         <LiveLocationPanel />
-        <CaptureDemoPanel />
+        <CaptureDemoPanel
+          roomId={snapshot.room.id}
+          roomCode={snapshot.room.code}
+          playerId={playerId}
+        />
 
         <div className="min-h-6 text-sm text-[#9d3b28]">{errorMessage}</div>
       </div>

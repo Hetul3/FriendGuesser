@@ -103,6 +103,50 @@ export type Database = {
           },
         ];
       };
+      room_demo_photos: {
+        Row: {
+          byte_size: number;
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["photo_kind"];
+          mime_type: string;
+          room_id: string;
+          storage_bucket: string;
+          storage_path: string;
+          user_id: string;
+        };
+        Insert: {
+          byte_size: number;
+          created_at?: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["photo_kind"];
+          mime_type: string;
+          room_id: string;
+          storage_bucket?: string;
+          storage_path: string;
+          user_id: string;
+        };
+        Update: {
+          byte_size?: number;
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["photo_kind"];
+          mime_type?: string;
+          room_id?: string;
+          storage_bucket?: string;
+          storage_path?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "room_demo_photos_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       rooms: {
         Row: {
           code: string;

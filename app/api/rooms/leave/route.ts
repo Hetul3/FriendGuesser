@@ -77,54 +77,60 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (room.status === "in_round") {
+  const { data: roomPhotos, error: roomPhotosError } = await admin
+    .from("room_demo_photos")
+    .select("storage_bucket, storage_path")
+    .eq("room_id", room.id);
+
+  if (roomPhotosError) {
     return NextResponse.json(
-      { error: "Leaving an active round is not supported yet." },
-      { status: 409 },
-    );
-  }
-
-  const { error: leaveError } = await admin
-    .from("room_members")
-    .update({
-      status: "left",
-      last_seen_at: new Date().toISOString(),
-    })
-    .eq("room_id", room.id)
-    .eq("user_id", user.id);
-
-  if (leaveError) {
-    return NextResponse.json({ error: "Unable to leave room." }, { status: 500 });
-  }
-
-  const { count: remainingMembers, error: countError } = await admin
-    .from("room_members")
-    .select("user_id", { count: "exact", head: true })
-    .eq("room_id", room.id)
-    .eq("status", "joined");
-
-  if (countError) {
-    return NextResponse.json(
-      { error: "Left the room, but failed to refresh room state." },
+      { error: "Unable to load room photos for cleanup." },
       { status: 500 },
     );
   }
 
-  if ((remainingMembers ?? 0) === 0) {
-    const { error: closeError } = await admin
-      .from("rooms")
-      .update({
-        status: "closed",
-      })
-      .eq("id", room.id);
+  const bucketGroups = new Map<string, string[]>();
 
-    if (closeError) {
+  for (const row of roomPhotos) {
+    const existing = bucketGroups.get(row.storage_bucket) ?? [];
+    existing.push(row.storage_path);
+    bucketGroups.set(row.storage_bucket, existing);
+  }
+
+  for (const [bucket, paths] of bucketGroups.entries()) {
+    const { error: storageError } = await admin.storage.from(bucket).remove(paths);
+
+    if (storageError) {
       return NextResponse.json(
-        { error: "Left the room, but failed to close the empty room." },
+        { error: "Unable to delete room photos during cleanup." },
         { status: 500 },
       );
     }
   }
 
-  return NextResponse.json({ success: true });
+  const { error: membershipsError } = await admin
+    .from("room_members")
+    .update({
+      status: "left",
+      last_seen_at: new Date().toISOString(),
+    })
+    .eq("room_id", room.id);
+
+  if (membershipsError) {
+    return NextResponse.json(
+      { error: "Unable to eject room members during cleanup." },
+      { status: 500 },
+    );
+  }
+
+  const { error: deleteRoomError } = await admin.from("rooms").delete().eq("id", room.id);
+
+  if (deleteRoomError) {
+    return NextResponse.json(
+      { error: "Unable to close and delete the room." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ success: true, closed: true });
 }

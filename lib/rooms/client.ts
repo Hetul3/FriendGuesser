@@ -4,6 +4,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/types";
 
 type RoomRow = Database["public"]["Tables"]["rooms"]["Row"];
+type RoomDemoPhotoRow = Database["public"]["Tables"]["room_demo_photos"]["Row"];
 type RoomMemberRow = Database["public"]["Tables"]["room_members"]["Row"];
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type RoundRow = Database["public"]["Tables"]["rounds"]["Row"];
@@ -32,6 +33,8 @@ export type RoomSnapshot = {
   members: LobbyMember[];
   activeRound: LobbyRound | null;
 };
+
+export type RoomDemoPhoto = RoomDemoPhotoRow;
 
 export async function findActiveRoomCodeForUser(userId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -157,4 +160,34 @@ export async function fetchRoomSnapshot(code: string, currentUserId: string) {
     })),
     activeRound,
   } satisfies RoomSnapshot;
+}
+
+export async function fetchRoomDemoPhotos(code: string) {
+  const supabase = getSupabaseBrowserClient();
+
+  const { data: room, error: roomError } = await supabase
+    .from("rooms")
+    .select("id")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (roomError) {
+    throw roomError;
+  }
+
+  if (!room) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("room_demo_photos")
+    .select("*")
+    .eq("room_id", room.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
