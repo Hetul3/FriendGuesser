@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { LiveLocationPanel } from "@/components/maps/live-location-panel";
 import { bootstrapAnonymousPlayer } from "@/lib/player/client";
 import { fetchRoomSnapshot, type RoomSnapshot } from "@/lib/rooms/client";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -424,6 +425,8 @@ export function RoomPageClient({ code }: RoomPageClientProps) {
             </div>
           </section>
         ) : null}
+
+        <LiveLocationPanel />
 
         <div className="min-h-6 text-sm text-[#9d3b28]">{errorMessage}</div>
       </div>

@@ -39,6 +39,22 @@ button:not(:disabled),
   cursor: pointer;
 }
 
+.live-location-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-location-marker__dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #165d59;
+  border: 3px solid rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 0 6px rgba(22, 93, 89, 0.16);
+}
+
 button,
 input,
 select,
